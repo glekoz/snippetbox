@@ -1,0 +1,25 @@
+<!-- 
+{{define "title"}}Home{{end}} 
+
+{{define "main"}}
+    {{if .Snippets}}
+        {{with .Snippets}}
+            {{range .}}
+            <div class='snippet'> 
+                <div class='metadata'> 
+                    <strong><a href = '/snippet/view?id={{.ID}}'>{{.Title}}</a></strong> 
+                    <span>#{{.ID}}</span> 
+                </div> 
+                <pre><code class="content">{{.Content}}</code></pre>
+                <div class='metadata'> 
+                    <time>Created: {{.Created}}</time> 
+                    <time>Expires: {{.Expires}}</time> 
+                </div> 
+            </div> 
+            {{end}}
+        {{end}}
+    {{else}}
+        <p>There's nothing to see here... yet!</p>
+    {{end}}
+{{end}}
+-->

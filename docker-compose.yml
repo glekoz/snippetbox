@@ -1,0 +1,25 @@
+services:
+  web:
+    build: .
+    ports:
+      - 8000:8000
+    volumes:
+      - ./:/snippetbox
+    command: ["go", "run", "./cmd/web"]
+    depends_on:
+      - db
+
+  db:
+    image: postgres:17
+    container_name: db_go
+    environment:
+      - POSTGRES_DB=snippetbox # здесь настраиваются сами настройки БД 
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data_go:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+volumes:
+  postgres_data_go:
