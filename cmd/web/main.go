@@ -18,6 +18,7 @@ type application struct {
 	errorLog      *log.Logger
 	infoLog       *log.Logger
 	snippets      *models.SnippetModel
+	users         *models.UserModel
 	templateCache map[string]*template.Template
 }
 
@@ -48,6 +49,7 @@ func main() {
 		infoLog:       infoLog,
 		errorLog:      errorLog,
 		snippets:      &models.SnippetModel{DB: db},
+		users:         &models.UserModel{DB: db},
 		templateCache: templateCache,
 	}
 

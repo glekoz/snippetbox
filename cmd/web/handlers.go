@@ -19,6 +19,19 @@ type snippetCreateForm struct {
 	validator.Validator
 }
 
+type userLoginForm struct {
+	Email    string
+	Password string
+	validator.Validator
+}
+
+type userSignupForm struct {
+	Name     string
+	Email    string
+	Password string
+	validator.Validator
+}
+
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		app.notFound(w)
@@ -128,4 +141,98 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	}
 
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
+}
+
+func (app *application) userSignupGet(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	data.Form = userSignupForm{}
+
+	app.render(w, http.StatusOK, "signup.html", data)
+}
+
+func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+	form := userSignupForm{
+		Name:     r.PostForm.Get("name"),
+		Email:    r.PostForm.Get("email"),
+		Password: r.PostForm.Get("password"),
+	}
+	form.CheckField(validator.MaxChars(form.Name, 20), "name", "This field cannot be more than 20 characters long")
+	form.CheckField(validator.ValidName(form.Name), "name", "This field can only contain letters, numbers and symbols - _")
+	form.CheckField(validator.MinChars(form.Name, 3), "name", "This field must contain more than 3 characters")
+	form.CheckField(validator.ValidEmail(form.Email), "email", "Please enter correct email")
+	form.CheckField(validator.ValidPassword(form.Password), "password", "Password must contain 1 number (0-9), 1 uppercase letter, 1 lowercase letter, 1 non-alpha numeric number, password is 8-16 characters with no space")
+
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
+		return
+	}
+
+	_, err = app.users.Insert(form.Name, form.Email, form.Password)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (app *application) userLoginGet(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	data.Form = userLoginForm{}
+
+	app.render(w, http.StatusOK, "login.html", data)
+}
+
+func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
+	form := &userLoginForm{
+		Email:    r.PostForm.Get("email"),
+		Password: r.PostForm.Get("password"),
+	}
+
+	user, err := app.users.Get(form.Email, form.Password)
+	if err != nil {
+		if errors.Is(err, models.ErrWrongCredentials) {
+			form.AddFieldError("credentials", "Wrong Credentials")
+		} else {
+			app.serverError(w, err)
+			return
+		}
+	}
+
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, http.StatusUnprocessableEntity, "login.html", data)
+		return
+	}
+
+	tokenString, err := app.createJWTToken(user.Name, user.Email, user.ID)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    tokenString,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   false, // если HTTPS - true, локальная разработка - false
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

@@ -37,3 +37,20 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+func (app *application) requestJWT(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, err := r.Cookie("auth_token")
+		if err != nil {
+			app.clientError(w, http.StatusUnauthorized)
+			return
+		}
+		err = app.verifyJWTToken(token.Value)
+		if err != nil {
+			app.clientError(w, http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}

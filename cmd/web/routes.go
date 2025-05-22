@@ -16,10 +16,13 @@ func (app *application) routes() http.Handler {
 
 	// обработчики конкретных путей
 	mux.HandleFunc("GET /", app.home)
-	mux.HandleFunc("GET /snippet/view/{id}", app.snippetView)
+	mux.Handle("GET /snippet/view/{id}", app.requestJWT(http.HandlerFunc(app.snippetView)))
 	mux.HandleFunc("GET /snippet/create", app.snippetCreateGet)
 	mux.HandleFunc("POST /snippet/create", app.snippetCreatePost)
 	mux.HandleFunc("GET /user/signup", app.userSignupGet)
+	mux.HandleFunc("POST /user/signup", app.userSignupPost)
+	mux.HandleFunc("GET /user/login", app.userLoginGet)
+	mux.HandleFunc("POST /user/login", app.userLoginPost)
 
 	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
 

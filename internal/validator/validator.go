@@ -1,10 +1,15 @@
 package validator
 
 import (
+	"net/mail"
+	"regexp"
 	"slices"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
+
+var regexpName = regexp.MustCompile("^[A-Za-z0-9]+([A-Za-z0-9]*|[._-]?[A-Za-z0-9]+)*$")
 
 type Validator struct {
 	FieldErrors map[string]string
@@ -37,6 +42,42 @@ func MaxChars(value string, n int) bool {
 	return utf8.RuneCountInString(value) <= n
 }
 
+func MinChars(value string, n int) bool {
+	return utf8.RuneCountInString(value) >= n
+}
+
 func PermittedInt(value int, permittedValues ...int) bool {
 	return slices.Contains(permittedValues, value)
+}
+
+func ValidEmail(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
+}
+
+func ValidName(name string) bool {
+	return regexpName.MatchString(name)
+}
+
+func ValidPassword(password string) bool {
+	if len(password) < 8 || len(password) > 16 {
+		return false
+	}
+
+	var hasUpper, hasLower, hasDigit, hasSpecial bool
+	for _, r := range password {
+		switch {
+		case unicode.IsUpper(r):
+			hasUpper = true
+		case unicode.IsLower(r):
+			hasLower = true
+		case unicode.IsDigit(r):
+			hasDigit = true
+		case unicode.IsPunct(r) || unicode.IsSymbol(r):
+			hasSpecial = true
+		case unicode.IsSpace(r):
+			return false
+		}
+	}
+	return hasUpper && hasLower && hasDigit && hasSpecial
 }
