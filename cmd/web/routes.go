@@ -15,6 +15,7 @@ func (app *application) routes() http.Handler {
 	mux.Handle("GET /static/", http.StripPrefix("/static", fileServer))
 
 	// обработчики конкретных путей
+	// чтобы так на каждый эндпоинт не писать - сделать новую цепочку
 	mux.HandleFunc("GET /", app.home)
 	mux.Handle("GET /snippet/view/{id}", app.requestJWT(http.HandlerFunc(app.snippetView)))
 	mux.HandleFunc("GET /snippet/create", app.snippetCreateGet)

@@ -1,9 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+
+	"snippetbox.glebich/internal/jwtAuth"
 )
+
+type contextKey string
+
+const contextKeyUser = contextKey("user")
 
 func secureHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -45,12 +52,14 @@ func (app *application) requestJWT(next http.Handler) http.Handler {
 			app.clientError(w, http.StatusUnauthorized)
 			return
 		}
-		err = app.verifyJWTToken(token.Value)
+		user, err := jwtAuth.VerifyJWTToken(token.Value)
 		if err != nil {
 			app.clientError(w, http.StatusUnauthorized)
 			return
 		}
 
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), contextKeyUser, user)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

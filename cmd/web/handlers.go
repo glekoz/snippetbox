@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"snippetbox.glebich/internal/jwtAuth"
 	"snippetbox.glebich/internal/models"
 	"snippetbox.glebich/internal/validator"
 )
@@ -56,6 +57,12 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value(contextKeyUser).(*jwtAuth.Sub)
+	if !ok {
+		app.serverError(w, fmt.Errorf("context passing error"))
+		return
+	}
+
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || id < 1 {
 		app.notFound(w)
@@ -76,6 +83,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 
 	data := app.newTemplateData(r)
 	data.Snippet = snippet
+	data.Form = user
 	app.render(w, http.StatusOK, "view.html", data)
 
 	//fmt.Fprintf(w, "Display a specific snippet with ID %d...\n", id)
@@ -219,7 +227,7 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenString, err := app.createJWTToken(user.Name, user.Email, user.ID)
+	tokenString, err := jwtAuth.CreateJWTToken(user.Name, user.Email, user.ID)
 	if err != nil {
 		app.serverError(w, err)
 		return
