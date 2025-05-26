@@ -19,6 +19,7 @@ type application struct {
 	infoLog       *log.Logger
 	snippets      *models.SnippetModel
 	users         *models.UserModel
+	refreshTokens *models.RefreshTokenModel
 	templateCache map[string]*template.Template
 }
 
@@ -50,6 +51,7 @@ func main() {
 		errorLog:      errorLog,
 		snippets:      &models.SnippetModel{DB: db},
 		users:         &models.UserModel{DB: db},
+		refreshTokens: &models.RefreshTokenModel{DB: db},
 		templateCache: templateCache,
 	}
 

@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"snippetbox.glebich/internal/jwtAuth"
 	"snippetbox.glebich/internal/models"
 )
 
@@ -13,6 +14,7 @@ type templateData struct {
 	Snippet     *models.Snippet
 	Snippets    []*models.Snippet
 	Form        any
+	User        *jwtAuth.Sub
 }
 
 var functions = template.FuncMap{

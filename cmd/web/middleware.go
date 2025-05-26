@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -45,21 +46,69 @@ func (app *application) recoverPanic(next http.Handler) http.Handler {
 	})
 }
 
-func (app *application) requestJWT(next http.Handler) http.Handler {
+func (app *application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token, err := r.Cookie("auth_token")
+		refreshToken, err := r.Cookie("refresh_token")
 		if err != nil {
-			app.clientError(w, http.StatusUnauthorized)
+			next.ServeHTTP(w, r)
 			return
 		}
-		user, err := jwtAuth.VerifyJWTToken(token.Value)
+
+		var user *jwtAuth.Sub
+
+		token, err := r.Cookie("auth_token")
 		if err != nil {
-			app.clientError(w, http.StatusUnauthorized)
-			return
+			user, err = app.VerifyRefreshTokenAndCreateJWT(refreshToken.Value, w)
+			if err != nil {
+				if errors.Is(err, jwtAuth.ErrInvalidRefreshToken) {
+					next.ServeHTTP(w, r)
+					return
+				}
+				if errors.Is(err, jwtAuth.ErrServerError) {
+					next.ServeHTTP(w, r)
+					return
+				} else {
+					next.ServeHTTP(w, r)
+					return
+				}
+			}
+		} else {
+			user, err = jwtAuth.VerifyJWTToken(token.Value)
+			if err != nil {
+				user, err = app.VerifyRefreshTokenAndCreateJWT(refreshToken.Value, w)
+				if err != nil {
+					next.ServeHTTP(w, r) // подробные ошибки добавить
+					return
+				}
+			}
 		}
 
 		ctx := context.WithValue(r.Context(), contextKeyUser, user)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (app *application) requireAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, ok := r.Context().Value(contextKeyUser).(*jwtAuth.Sub)
+		if !ok {
+			app.clientError(w, http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *application) requireNoAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, ok := r.Context().Value(contextKeyUser).(*jwtAuth.Sub)
+		if ok {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
+		next.ServeHTTP(w, r)
 	})
 }

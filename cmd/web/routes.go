@@ -17,15 +17,16 @@ func (app *application) routes() http.Handler {
 	// обработчики конкретных путей
 	// чтобы так на каждый эндпоинт не писать - сделать новую цепочку
 	mux.HandleFunc("GET /", app.home)
-	mux.Handle("GET /snippet/view/{id}", app.requestJWT(http.HandlerFunc(app.snippetView)))
+	mux.Handle("GET /snippet/view/{id}", alice.New(app.requireAuth).ThenFunc(app.snippetView))
 	mux.HandleFunc("GET /snippet/create", app.snippetCreateGet)
 	mux.HandleFunc("POST /snippet/create", app.snippetCreatePost)
-	mux.HandleFunc("GET /user/signup", app.userSignupGet)
-	mux.HandleFunc("POST /user/signup", app.userSignupPost)
-	mux.HandleFunc("GET /user/login", app.userLoginGet)
-	mux.HandleFunc("POST /user/login", app.userLoginPost)
+	mux.Handle("GET /user/signup", alice.New(app.requireNoAuth).ThenFunc(app.userSignupGet))
+	mux.Handle("POST /user/signup", alice.New(app.requireNoAuth).ThenFunc(app.userSignupPost))
+	mux.Handle("GET /user/login", alice.New(app.requireNoAuth).ThenFunc(app.userLoginGet))
+	mux.Handle("POST /user/login", alice.New(app.requireNoAuth).ThenFunc(app.userLoginPost))
+	mux.Handle("POST /user/logout", alice.New(app.requireAuth).ThenFunc(app.userLogoutPost))
 
-	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders)
+	standard := alice.New(app.recoverPanic, app.logRequest, secureHeaders, app.authenticate)
 
 	return standard.Then(mux)
 }

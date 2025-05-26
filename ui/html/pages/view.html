@@ -1,8 +1,8 @@
 {{define "title"}}Snippet #{{.Snippet.ID}}{{end}} 
  
 {{define "main"}}
-    {{if .Form}}
-        <h1>YOU ARE LOGGED IN AS {{.Form.Name}}</h1>
+    {{if .User}}
+        <h1>YOU ARE LOGGED IN AS {{.User.Name}}</h1>
     {{end}}
     {{with .Snippet}}
         {{if timeNow .Created}}

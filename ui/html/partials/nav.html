@@ -1,8 +1,20 @@
 {{define "nav"}} 
  <nav> 
-   <a href='/'>Home</a>
-   <a href='/snippet/create'>Create snippet</a>
-   <a href='/user/signup'>Sign Up</a>
-   <a href='/user/login'>Log In</a>
+  <div>
+    <a href='/'>Home</a>
+    <a href='/snippet/create'>Create snippet</a>
+  </div>
+  {{if not .User}}
+    <div> 
+      <a href='/user/signup'>Sign Up</a> 
+      <a href='/user/login'>Log In</a> 
+    </div>
+  {{else}}
+    <div>
+      <form action='/user/logout' method='POST'> 
+        <button>Log Out</button> 
+      </form>
+    </div> 
+  {{end}}
  </nav> 
 {{end}}

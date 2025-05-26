@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"snippetbox.glebich/internal/jwtAuth"
 	"snippetbox.glebich/internal/models"
 	"snippetbox.glebich/internal/validator"
 )
@@ -57,12 +56,6 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
-	user, ok := r.Context().Value(contextKeyUser).(*jwtAuth.Sub)
-	if !ok {
-		app.serverError(w, fmt.Errorf("context passing error"))
-		return
-	}
-
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || id < 1 {
 		app.notFound(w)
@@ -83,7 +76,6 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 
 	data := app.newTemplateData(r)
 	data.Snippet = snippet
-	data.Form = user
 	app.render(w, http.StatusOK, "view.html", data)
 
 	//fmt.Fprintf(w, "Display a specific snippet with ID %d...\n", id)
@@ -182,7 +174,19 @@ func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = app.users.Insert(form.Name, form.Email, form.Password)
+	id, err := app.users.Insert(form.Name, form.Email, form.Password)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	err = CreateJWTTokenAndSetCookie(form.Name, form.Email, id, w)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	err = app.GenerateRefreshTokenAndCookie(w, id)
 	if err != nil {
 		app.serverError(w, err)
 		return
@@ -227,20 +231,50 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenString, err := jwtAuth.CreateJWTToken(user.Name, user.Email, user.ID)
+	err = CreateJWTTokenAndSetCookie(user.Name, user.Email, user.ID, w)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
+	err = app.GenerateRefreshTokenAndCookie(w, user.ID)
+	if err != nil {
+		app.serverError(w, err)
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+
+	err := app.refreshTokens.Delete(data.User.ID)
+	if err != nil {
+		app.serverError(w, fmt.Errorf("fr I don't know WTF"))
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",
-		Value:    tokenString,
+		Value:    "",
 		Path:     "/",
 		HttpOnly: true,
-		Secure:   false, // если HTTPS - true, локальная разработка - false
+		Secure:   true, // если HTTPS - true, локальная разработка - false
 		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
 	})
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true, // если HTTPS - true, локальная разработка - false
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   -1,
+	})
+
+	// наверно, можно передавать в контекст ещё разные сообщения,
+	// чтобы информационные уведомления показывать типа
+	// вы вышли из аккаунта, вы вошли в акк и тп
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

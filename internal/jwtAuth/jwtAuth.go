@@ -23,7 +23,7 @@ func CreateJWTToken(name, email string, id int) (string, error) {
 	}
 	payload := jwt.MapClaims{
 		"sub": user,
-		"exp": time.Now().Add(time.Hour).Unix(),
+		"exp": time.Now().Add(15 * time.Minute).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 	tokenString, err := token.SignedString(secretKey)
