@@ -176,17 +176,25 @@ func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 
 	id, err := app.users.Insert(form.Name, form.Email, form.Password)
 	if err != nil {
-		app.serverError(w, err)
+		if errors.Is(err, models.ErrDuplicateEntry) {
+			form.AddFieldError("email", "This email is already in use")
+
+			data := app.newTemplateData(r)
+			data.Form = form
+			app.render(w, http.StatusUnprocessableEntity, "signup.html", data)
+		} else {
+			app.serverError(w, err)
+		}
 		return
 	}
 
-	err = CreateJWTTokenAndSetCookie(form.Name, form.Email, id, w)
+	err = app.GenerateRefreshTokenAndCookie(w, id)
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
 
-	err = app.GenerateRefreshTokenAndCookie(w, id)
+	err = CreateJWTTokenAndSetCookie(form.Name, form.Email, id, w)
 	if err != nil {
 		app.serverError(w, err)
 		return

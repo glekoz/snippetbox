@@ -93,9 +93,11 @@ func (app *application) requireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, ok := r.Context().Value(contextKeyUser).(*jwtAuth.Sub)
 		if !ok {
-			app.clientError(w, http.StatusUnauthorized)
+			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+			//app.clientError(w, http.StatusUnauthorized)
 			return
 		}
+		w.Header().Add("Cache-Control", "no-store")
 
 		next.ServeHTTP(w, r)
 	})

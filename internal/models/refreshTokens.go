@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"snippetbox.glebich/internal/jwtAuth"
@@ -27,10 +28,20 @@ func (m *RefreshTokenModel) Insert(value string, expires int, userId int) error 
 			return err
 		}
 	*/
+
+	// думаю, потом лучше будет перенести удаление истекших токенов на БД
 	stmt := `INSERT INTO refresh_tokens(value, expires, user_id) 
 	VALUES($1, CURRENT_TIMESTAMP + $2 * INTERVAL '1 day', $3)`
 	_, err := m.DB.Exec(stmt, value, expires, userId)
 	if err != nil {
+		if strings.Contains(err.Error(), "duplicate key value") {
+			if err = m.Delete(userId); err != nil {
+				return err
+			}
+			if _, err = m.DB.Exec(stmt, value, expires, userId); err != nil {
+				return err
+			}
+		}
 		return err
 	}
 	return nil

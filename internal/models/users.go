@@ -2,6 +2,8 @@ package models
 
 import (
 	"database/sql"
+	"errors"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -31,11 +33,37 @@ func (m *UserModel) Insert(name, email, password string) (int, error) {
 	var id int64
 	err = m.DB.QueryRow(stmt, name, email, hashedPassword).Scan(&id)
 	if err != nil {
-		return 0, err
+		// нужно, если потом откажусь от отдельной проверки Exist
+		if strings.Contains(err.Error(), "pq: duplicate key value") {
+			return 0, ErrDuplicateEntry
+		} else {
+			return 0, err
+		}
 	}
 	return int(id), nil
 }
 
+/*
+// Нельзя использовать это как проверку на уникальность email
+// перед регистрацией нового пользователя, потому что
+// при одновременной регистрации с одной и той же почтой
+// регистрация у одного пройдет успешно, а у второго
+// произойдет 500 ошибка
+
+	func (m *UserModel) Exist(email string) (bool, error) {
+		stmt := `SELECT id FROM users WHERE email = $1`
+		var id int64
+		err := m.DB.QueryRow(stmt, email).Scan(&id)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return false, nil
+			} else {
+				return true, err
+			}
+		}
+		return true, nil
+	}
+*/
 func (m *UserModel) Get(email, password string) (*User, error) {
 	stmt := `SELECT id, name, email, hashed_password FROM users WHERE email = $1`
 	row := m.DB.QueryRow(stmt, email)
@@ -47,7 +75,12 @@ func (m *UserModel) Get(email, password string) (*User, error) {
 	}
 	err = bcrypt.CompareHashAndPassword(u.HashedPassword, []byte(password))
 	if err != nil {
-		return nil, ErrWrongCredentials
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return nil, ErrWrongCredentials
+		} else {
+			return nil, err
+		}
+
 	}
 	return u, nil
 }
