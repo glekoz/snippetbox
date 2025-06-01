@@ -2,11 +2,13 @@ package main
 
 import (
 	"html/template"
+	"io/fs"
 	"path/filepath"
 	"time"
 
 	"snippetbox.glebich/internal/jwtAuth"
 	"snippetbox.glebich/internal/models"
+	"snippetbox.glebich/ui"
 )
 
 type templateData struct {
@@ -15,6 +17,7 @@ type templateData struct {
 	Snippets    []*models.Snippet
 	Form        any
 	User        *jwtAuth.Sub
+	CSRFToken   string
 }
 
 var functions = template.FuncMap{
@@ -30,6 +33,7 @@ func humanDate(t time.Time) string {
 	return t.Format("02 Jan 2006 at 15:04")
 }
 
+/*
 func newTemplateCache() (map[string]*template.Template, error) {
 	cache := map[string]*template.Template{}
 
@@ -55,6 +59,32 @@ func newTemplateCache() (map[string]*template.Template, error) {
 		if err != nil {
 			return nil, err
 		}
+		cache[name] = ts
+	}
+	return cache, nil
+}
+*/
+
+func newTemplateCache() (map[string]*template.Template, error) {
+	cache := map[string]*template.Template{}
+	pages, err := fs.Glob(ui.Files, "html/pages/*.html")
+	if err != nil {
+		return nil, err
+	}
+	for _, page := range pages {
+		name := filepath.Base(page)
+
+		paterns := []string{
+			"html/base.html",
+			"html/partials/*.html",
+			page,
+		}
+
+		ts, err := template.New(name).Funcs(functions).ParseFS(ui.Files, paterns...)
+		if err != nil {
+			return nil, err
+		}
+
 		cache[name] = ts
 	}
 	return cache, nil

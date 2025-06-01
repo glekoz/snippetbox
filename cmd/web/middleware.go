@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/justinas/nosurf"
 	"snippetbox.glebich/internal/jwtAuth"
 )
 
@@ -65,7 +66,7 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 					return
 				}
 				if errors.Is(err, jwtAuth.ErrServerError) {
-					next.ServeHTTP(w, r)
+					app.serverError(w, err)
 					return
 				} else {
 					next.ServeHTTP(w, r)
@@ -113,4 +114,15 @@ func (app *application) requireNoAuth(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (app *application) noSurf(next http.Handler) http.Handler {
+	csrfHandler := nosurf.New(next)
+	csrfHandler.SetBaseCookie(http.Cookie{
+		HttpOnly: true,
+		Path:     "/",
+		Secure:   true,
+	})
+
+	return csrfHandler
 }

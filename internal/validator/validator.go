@@ -3,7 +3,6 @@ package validator
 import (
 	"net/mail"
 	"regexp"
-	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -46,8 +45,14 @@ func MinChars(value string, n int) bool {
 	return utf8.RuneCountInString(value) >= n
 }
 
-func PermittedInt(value int, permittedValues ...int) bool {
-	return slices.Contains(permittedValues, value)
+func PermittedValue[T comparable](value T, permittedValues ...T) bool {
+	for _, v := range permittedValues {
+		if v == value {
+			return true
+		}
+	}
+	return false
+	//return slices.Contains(permittedValues, value)
 }
 
 func ValidEmail(email string) bool {

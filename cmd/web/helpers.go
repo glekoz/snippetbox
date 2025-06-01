@@ -8,6 +8,7 @@ import (
 	"runtime/debug"
 	"time"
 
+	"github.com/justinas/nosurf"
 	"snippetbox.glebich/internal/jwtAuth"
 )
 
@@ -52,6 +53,7 @@ func (app *application) render(w http.ResponseWriter, status int, page string, d
 func (app *application) newTemplateData(r *http.Request) *templateData {
 	td := &templateData{
 		CurrentYear: time.Now().Year(),
+		CSRFToken:   nosurf.Token(r),
 	}
 	if user, ok := r.Context().Value(contextKeyUser).(*jwtAuth.Sub); ok {
 		td.User = user
