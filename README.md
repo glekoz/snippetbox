@@ -126,6 +126,7 @@ A typical layout for the project follows this structure (many forks follow this 
 / (repo root)
 ├─ cmd/web/                # main web server package
 ├─ internal/               # application code not intended for external import
+│  ├─ assert/              # helper functions for testing
 │  ├─ jwtAuth/             # authentication based on JWT tokens
 │  ├─ models/              # database models & persistence
 │  └─ validator/           # user input validation
