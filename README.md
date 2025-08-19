@@ -1,6 +1,6 @@
 # Snippetbox
 
-> ### A lightweight, secure Go web application for saving, sharing and managing short text snippets (like Pastebin or GitHub Gists).
+#### A lightweight, secure Go web application for saving, sharing and managing short text snippets (like Pastebin or GitHub Gists).
 
 Snippetbox is a small, production-minded web app written in Go that lets users create, view and manage short text snippets. It’s designed as a clean example project for building web services with Go — ideal as a learning project or a starting point for your own snippet / paste-style application.
 
