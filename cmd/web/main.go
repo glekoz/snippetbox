@@ -92,13 +92,3 @@ func openDB(dsn string) (*sql.DB, error) {
 	}
 	return db, nil
 }
-
-/*
-	dsn := "postgres://postgres:postgres@localhost:5432/snippetbox"
-	ctx := context.Background()
-	dbpool, err := pgxpool.New(ctx, dsn)
-	if err != nil {
-		app.errorLog.Fatal(err)
-	}
-	defer dbpool.Close()
-*/
