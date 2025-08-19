@@ -2,7 +2,7 @@
 
 #### A lightweight, secure Go web application for saving, sharing and managing short text snippets (like Pastebin or GitHub Gists).
 
-Snippetbox is a small, production-minded web app written in Go that lets users create, view and manage short text snippets. It’s designed as a clean example project for building web services with Go.
+Snippetbox is a small, production-minded web app written in Go that lets users create, view and manage short text snippets. It’s designed as a clean example project for building web services with Go. It's currently under development, so new features, bug fixes and overall improvement are coming.
 
 ---
 
@@ -19,6 +19,7 @@ Snippetbox is a small, production-minded web app written in Go that lets users c
   * [Database setup](#database-setup)
   * [TLS / HTTPS](#tls--https)
 * [Directory Layout](#directory-layout)
+* [Testing](#testing)
 * [Deployment](#deployment)
 * [Roadmap / TODO](#roadmap--todo)
 * [Contributing](#contributing)
@@ -71,7 +72,7 @@ Below are recommended configuration keys you should add or adapt to your code ba
 | Variable         |                                  Purpose | Example                                                   |
 | ---------------- | ---------------------------------------: | --------------------------------------------------------- |
 | `DB_DSN`         |   Database connection string (MySQL DSN) | `user:pass@tcp(localhost:3306)/snippetbox?parseTime=true` |
-| `PORT`           |                      HTTP(S) listen port | `4000`                                                    |
+| `PORT`           |                      HTTP(S) listen port | `8000`                                                    |
 | `SESSION_SECRET` |   Secret key for signing session cookies | `a-very-secret-string`                                    |
 | `TLS_CERT`       |            Path to TLS certificate (PEM) | `/etc/ssl/certs/snippetbox.crt`                           |
 | `TLS_KEY`        |            Path to TLS private key (PEM) | `/etc/ssl/private/snippetbox.key`                         |
@@ -132,6 +133,23 @@ A typical layout for the project follows this structure (many forks follow this 
 ├─ Dockerfile
 ├─ docker-compose.yml
 └─ go.mod
+```
+
+---
+
+## Testing
+
+* Run unit tests with `go test ./...`.
+* Use table-driven tests and dependency injection for easy testability of handlers and database code.
+
+Examples:
+
+```bash
+# run tests
+go test ./... -v
+
+# run a single package
+go test ./internal/models -run TestInsertSnippet -v
 ```
 
 ---
