@@ -2,7 +2,7 @@
 
 #### A lightweight, secure Go web application for saving, sharing and managing short text snippets (like Pastebin or GitHub Gists).
 
-Snippetbox is a small, production-minded web app written in Go that lets users create, view and manage short text snippets. It’s designed as a clean example project for building web services with Go — ideal as a learning project or a starting point for your own snippet / paste-style application.
+Snippetbox is a small, production-minded web app written in Go that lets users create, view and manage short text snippets. It’s designed as a clean example project for building web services with Go.
 
 ---
 
@@ -13,15 +13,12 @@ Snippetbox is a small, production-minded web app written in Go that lets users c
 
   * [Prerequisites](#prerequisites)
   * [Run with Docker (recommended)](#run-with-docker-recommended)
-  * [Run locally (dev)](#run-locally-dev)
 * [Configuration](#configuration)
 
-  * [Environment variables](#environment-variables)
-  * [Flags and config files](#flags-and-config-files)
+  * [Variables](#variables)
   * [Database setup](#database-setup)
   * [TLS / HTTPS](#tls--https)
 * [Directory Layout](#directory-layout)
-* [Development & Testing](#development--testing)
 * [Deployment](#deployment)
 * [Roadmap / TODO](#roadmap--todo)
 * [Contributing](#contributing)
@@ -33,14 +30,12 @@ Snippetbox is a small, production-minded web app written in Go that lets users c
 ## Features
 
 * Create, read and list short text **snippets** (title, content, created at).
-* User **authentication** (register, sign in) and session management.
+* User **authentication** (register, sign in using JWT tokens) and session management.
 * Access control: only authenticated users can create or manage their snippets (configurable).
-* Persistent storage using a relational database (MySQL / MariaDB by default).
+* Persistent storage using a relational database (PostgreSQL by default).
 * Secure defaults: TLS support, CSRF protection, input sanitization and secure session cookies.
 * Simple, responsive UI rendered with Go HTML templates (server-side rendering).
 * Production-ready build and packaging via Docker + `docker-compose`.
-
-> This README is organized to be easily adapted to your fork or custom fork of the project.
 
 ---
 
@@ -49,9 +44,8 @@ Snippetbox is a small, production-minded web app written in Go that lets users c
 ### Prerequisites
 
 * Go (recommended version `1.20+`, but the project may work with earlier Go 1.x series)
-* MySQL or MariaDB instance (local or remote)
+* PostgreSQL or MySQL instance (local or remote)
 * Docker & Docker Compose (recommended for a one-command run)
-* `make` (optional — many repos include Makefile helpers)
 
 ### Run with Docker (recommended)
 
@@ -66,31 +60,13 @@ cd snippetbox
 docker-compose up --build
 ```
 
-After the services start, the web app is commonly available at `https://localhost:4000` or `http://localhost:4000` depending on how TLS is configured. Adjust ports in `docker-compose.yml` if needed.
-
-### Run locally (dev)
-
-Run the application directly with the Go toolchain (useful for development):
-
-```bash
-# from project root
-# set environment variables (see Configuration section below)
-export DB_DSN="user:password@tcp(localhost:3306)/snippetbox?parseTime=true"
-export SESSION_SECRET="a-long-random-secret"
-
-# run the server
-go run ./cmd/web
-```
-
-> Tip: many forks provide `make dev` or `make run` targets — check `Makefile` if present.
-
----
+After the services start, the web app is commonly available at `https://localhost:8000` or `http://localhost:8000` depending on how TLS is configured. Adjust ports in `docker-compose.yml` if needed.
 
 ## Configuration
 
-The app can be configured via environment variables and/or command line flags. Below are recommended configuration keys you should add or adapt to your code base.
+Below are recommended configuration keys you should add or adapt to your code base.
 
-### Environment variables
+### Variables
 
 | Variable         |                                  Purpose | Example                                                   |
 | ---------------- | ---------------------------------------: | --------------------------------------------------------- |
@@ -102,14 +78,6 @@ The app can be configured via environment variables and/or command line flags. B
 | `LOG_LEVEL`      | Log verbosity (info, debug, warn, error) | `info`                                                    |
 
 > If your repo uses a config file (YAML / JSON / TOML) you can map the same values there and load them at startup.
-
-### Flags and config files
-
-If your project supports command-line flags, the common pattern is to accept a `-config` or `-env` flag pointing to a config file. Example:
-
-```bash
-go run ./cmd/web -config config.yaml
-```
 
 ### Database setup
 
@@ -134,8 +102,6 @@ CREATE TABLE snippets (
 );
 ```
 
-> Check the repository for any `migrations/` or `schema.sql` files and run them using your preferred migration tool (golang-migrate, goose, etc.).
-
 ### TLS / HTTPS
 
 For development you can generate a self-signed certificate (many repos include a `Makefile` target for this):
@@ -157,35 +123,15 @@ A typical layout for the project follows this structure (many forks follow this 
 
 ```
 / (repo root)
-├─ cmd/web/                # main web server package (executable)
-├─ internal/                # application code not intended for external import
-│  ├─ models/               # database models & persistence
-│  ├─ handlers/             # HTTP handlers
-│  └─ middleware/           # middleware (auth, logging, CSRF)
+├─ cmd/web/                # main web server package
+├─ internal/               # application code not intended for external import
+│  ├─ jwtAuth/             # authentication based on JWT tokens
+│  ├─ models/              # database models & persistence
+│  └─ validator/           # user input validation
 ├─ ui/                     # static assets + templates
 ├─ Dockerfile
 ├─ docker-compose.yml
 └─ go.mod
-```
-
-Adjust this section to match the actual project layout in your fork.
-
----
-
-## Development & Testing
-
-* Run unit tests with `go test ./...`.
-* Use table-driven tests and dependency injection for easy testability of handlers and database code.
-* Consider using `air` or `reflex` for auto-reloads during development.
-
-Examples:
-
-```bash
-# run tests
-go test ./... -v
-
-# run a single package
-go test ./internal/models -run TestInsertSnippet -v
 ```
 
 ---
@@ -196,11 +142,10 @@ Suggested deployment approaches:
 
 * **Docker / docker-compose**: simplest for small deployments.
 * **Kubernetes**: containerize the app and deploy with a Deployment + Service + Ingress (TLS via cert-manager).
-* **Systemd**: build a static binary and run with a systemd service on Linux.
 
 Production checklist:
 
-* Use a managed MySQL instance or a properly secured DB host.
+* Use a managed PostgreSQL instance or a properly secured DB host.
 * Use a real TLS certificate (Let's Encrypt / CA).
 * Set up backups for your database.
 * Configure proper logging and monitoring (stdout logging for Docker or a logging sidecar).
@@ -211,8 +156,6 @@ Production checklist:
 ## Roadmap / TODO
 
 * Add full-text search and tagging for snippets.
-* Support for private / public snippet visibility and shareable links.
-* Add an API (JSON) so third-party clients can integrate.
 * Improve UI/UX: syntax highlighting for code snippets, editor enhancements.
 * Add user roles (admin, moderator) and rate limiting to prevent abuse.
 * Add automated DB migrations and versioning.
