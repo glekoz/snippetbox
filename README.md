@@ -71,7 +71,7 @@ Below are recommended configuration keys you should add or adapt to your code ba
 
 | Variable         |                                  Purpose | Example                                                   |
 | ---------------- | ---------------------------------------: | --------------------------------------------------------- |
-| `DB_DSN`         |   Database connection string (MySQL DSN) | `user:pass@tcp(localhost:3306)/snippetbox?parseTime=true` |
+| `DB_DSN`         |   Database connection string (PostgreSQL DSN) | `postgres://postgres:postgres@db:5432/snippetbox?sslmode=disable` |
 | `PORT`           |                      HTTP(S) listen port | `8000`                                                    |
 | `SESSION_SECRET` |   Secret key for signing session cookies | `a-very-secret-string`                                    |
 | `TLS_CERT`       |            Path to TLS certificate (PEM) | `/etc/ssl/certs/snippetbox.crt`                           |
