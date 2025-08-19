@@ -286,3 +286,7 @@ func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
 	// вы вышли из аккаунта, вы вошли в акк и тп
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
+
+func ping(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("OK"))
+}
