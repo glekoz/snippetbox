@@ -32,7 +32,7 @@ func main() {
 	infoLog := log.New(os.Stdout, "[INFO]\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "[ERROR]\t", log.Ldate|log.Ltime|log.Lshortfile)
 
-	// Часть с подключением пула соединений к БД
+	// Часть с подключением к БД
 	dsn := "postgres://postgres:postgres@db:5432/snippetbox?sslmode=disable"
 	db, err := openDB(dsn)
 	if err != nil {
