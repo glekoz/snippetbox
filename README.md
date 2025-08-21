@@ -44,7 +44,7 @@ Snippetbox is a small, production-minded web app written in Go that lets users c
 
 ### Prerequisites
 
-* Go (recommended version `1.20+`, but the project may work with earlier Go 1.x series)
+* Go 1.24 or newer.
 * PostgreSQL or MySQL instance (local or remote)
 * Docker & Docker Compose (recommended for a one-command run)
 
@@ -118,9 +118,9 @@ For production use a real certificate (Let's Encrypt or another CA) and ensure p
 
 ---
 
-## Directory Layout (convention)
+## Directory Layout
 
-A typical layout for the project follows this structure (many forks follow this pattern):
+A typical layout for the project follows this structure:
 
 ```
 / (repo root)
